@@ -1,0 +1,3 @@
+rootProject.name = 'ReadingCompanion'
+
+include ':app'
