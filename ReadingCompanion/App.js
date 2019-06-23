@@ -137,12 +137,18 @@ _changeTextInputValue (text) {
 } 
 
   _onPressButton(item)  {
+
+
     self.setState({
       book_title: item.book_title,
       book_author: item.book_author,
       date_started: item.date_started,
       date_ended: item.date_ended,
+    }, function afterStateUpdate () {
+      self._showPopup(item);
     });
+  }
+  _showPopup(item) {
     console.log("popup")
     DialogManager.show({
       title: 'Edit',
