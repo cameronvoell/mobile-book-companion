@@ -7,8 +7,9 @@
  */
 
 import React from 'react';
-import { TouchableHighlight, Dimensions, FlatList, Platform, StyleSheet, Text, View, Button, Alert} from 'react-native';
+import { TextInput, TouchableHighlight, Dimensions, FlatList, Platform, StyleSheet, Text, View, Button, Alert} from 'react-native';
 import { openDatabase } from 'react-native-sqlite-storage';
+import DialogManager, { ScaleAnimation, DialogContent } from 'react-native-dialog-component';
 
 const styles = StyleSheet.create({
   main: {
@@ -69,6 +70,10 @@ export default class App extends React.Component {
     super(props);
     this.state = {
       FlatListItems: [],
+      book_title: '',
+      book_author: '',
+      date_started: '',
+      date_ended: '',
     };
   }
 
@@ -102,17 +107,7 @@ export default class App extends React.Component {
       
     });
 
-    db.transaction(tx => {
-      tx.executeSql('SELECT * FROM table_books ORDER BY book_id ASC', [], (tx, results) => {
-        var temp = [];
-        for (let i = 0; i < results.rows.length; ++i) {
-          temp.push(results.rows.item(i));
-        }
-        this.setState({
-          FlatListItems: temp,
-        });
-      });
-    });
+    self._refreshList();
   }
 
   ListViewItemSeparator = () => {
@@ -120,8 +115,126 @@ export default class App extends React.Component {
       <View style={{ height: 1, width: '100%', backgroundColor: '#ffffff' }} />
     );
   };
-  _onPressButton(id)  {
-    Alert.alert('You pressed book with id: ' + id)
+
+_refreshList() {
+  db.transaction(tx => {
+    tx.executeSql('SELECT * FROM table_books ORDER BY book_id ASC', [], (tx, results) => {
+      var temp = [];
+      for (let i = 0; i < results.rows.length; ++i) {
+        temp.push(results.rows.item(i));
+      }
+      this.setState({
+        FlatListItems: temp,
+      });
+    });
+  });
+}
+
+_changeTextInputValue (text) { 
+  self.setState({ 
+    text 
+  }); 
+} 
+
+  _onPressButton(item)  {
+    self.setState({
+      book_title: item.book_title,
+      book_author: item.book_author,
+      date_started: item.date_started,
+      date_ended: item.date_ended,
+    });
+    console.log("popup")
+    DialogManager.show({
+      title: 'Edit',
+      titleAlign: 'center',
+      animationDuration: 200,
+      ScaleAnimation: new ScaleAnimation(),
+      children: (
+        <DialogContent>
+          <View>
+            <TextInput
+              style={styles.bookTitle}
+              onChangeText={book_title => self.setState({ book_title })} 
+              defaultValue = {self.state.book_title}
+            />
+            <TextInput
+              style={styles.author}
+              onChangeText={(book_author) => self.setState({ book_author })}
+              defaultValue={self.state.book_author}
+            />
+            <TextInput
+              style={styles.dates}
+              onChangeText={(date_started) => self.setState({ date_started })}
+              defaultValue={self.state.date_started}
+            />
+            <TextInput
+              style={styles.dates}
+              onChangeText={(date_ended) => self.setState({ date_ended })}
+              defaultValue={self.state.date_ended}
+            />
+            <Button
+                style={styles.addButton}
+                title="save new"
+                onPress={() => self._updateItem(item)}
+              />
+            <Text>
+              Delete id: {item.book_id}?
+            </Text>
+            <Button
+                style={styles.addButton}
+                title="delete"
+                onPress={() => self._onPressDeleteButton(item.book_id)}
+              /> 
+          </View>
+        </DialogContent>
+      ),
+    }, () => {
+      console.log('callback - show');
+    });
+  }
+
+  _updateItem(oldItem) {
+    console.log(oldItem
+      .book_id)
+    db.transaction((tx)=> {
+      tx.executeSql(
+        'UPDATE table_books set book_title=?, book_author=? , date_started=?, date_ended=?, read_category=? where book_id=?',
+        [self.state.book_title, self.state.book_author, self.state.date_started, self.state.date_ended, oldItem.read_category, oldItem.book_id],
+        (tx, results) => {
+          console.log('Results',results.rowsAffected);
+          if(results.rowsAffected>0){
+            Alert.alert( 'Success');
+          }else{
+            alert('Updation Failed');
+          }
+        }
+      );
+    });
+    self._refreshList();
+    DialogManager.dismiss(() => {
+      console.log('callback - dismiss');
+    });
+  }
+
+  _onPressDeleteButton(id) {
+    db.transaction(tx => {
+      tx.executeSql(
+        'DELETE FROM  table_books where book_id=?',
+        [id],
+        (tx, results) => {
+          console.log('Results', results.rowsAffected);
+          if (results.rowsAffected > 0) {
+            //Alert.alert('Success');
+          } else {
+            alert('Please insert a valid User Id');
+          }
+        }
+      );
+    });
+    DialogManager.dismiss(() => {
+      console.log('callback - dismiss');
+    });
+    self._refreshList();
   }
   _onPressAddButton() {
     db.transaction(function(tx) {
@@ -129,20 +242,7 @@ export default class App extends React.Component {
         'INSERT INTO table_books (book_title, book_author, date_started, date_ended, read_category) VALUES (?,?,?,?,?)',
         ["The Collected Tales of Gogol Bordello", "Gogol Bordello", "May 15, 2019", "N/A", "1"],
         function(tx, result) {
-          console.log('Results', result.rowsAffected);
-          console.log("this actually works too...")
-          tx.executeSql(//reload items
-            'SELECT * FROM table_books ORDER BY book_id ASC', 
-            [], 
-            function(tx, results) {
-              var temp = [];
-              for (let i = 0; i < results.rows.length; ++i) {
-                temp.push(results.rows.item(i));
-              }
-              self.setState({
-                FlatListItems: temp,
-              });
-            });
+          self._refreshList();
         }
       );
     });
@@ -161,7 +261,7 @@ export default class App extends React.Component {
           renderItem={({ item }) => (
             
             <View key={item.book_id} style={styles.container}>
-            <TouchableHighlight  style={styles.touchable} onPress={() => this._onPressButton(item.book_id)} activeOpacity={0.75} underlayColor={"#c6fffd"}>
+            <TouchableHighlight  style={styles.touchable} onPress={() => this._onPressButton(item)} activeOpacity={0.75} underlayColor={"#c6fffd"}>
             <View>
               <Text style={styles.bookTitle}>{item.book_title}</Text>
               <Text style={styles.author}>by {item.book_author}</Text>
