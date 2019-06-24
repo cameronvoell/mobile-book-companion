@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput, Dimensions, Image, StyleSheet, Text, View, Button } from 'react-native';
+import { Alert, TextInput, Dimensions, Image, StyleSheet, Text, View, Button } from 'react-native';
 import { openDatabase } from 'react-native-sqlite-storage';
 import DatePicker from 'react-native-datepicker'
 
@@ -56,34 +56,37 @@ export default class App extends React.Component {
         title: 'Edit Book',
         //Sets Header text of Status Bar
         headerStyle: {
-          backgroundColor: '#92e8e5',
-          //Sets Header color
+            backgroundColor: '#92e8e5',
+            //Sets Header color
         },
         headerTintColor: '#fff',
         //Sets Header text color
         headerTitleStyle: {
-          fontWeight: 'bold',
-          //Sets Header text style
+            fontWeight: 'bold',
+            //Sets Header text style
         },
-      };
+    };
 
     constructor(props) {
         super(props);
-        date = new Date(parseInt(this.props.navigation.getParam('date_started'))); 
-        displayMonth = date.getMonth() + 1 //JS month is 0-11
+        startDate = new Date(parseInt(this.props.navigation.getParam('date_started')));
+        displayStartMonth = startDate.getMonth() + 1 //JS month is 0-11
+        endDate = new Date(parseInt(this.props.navigation.getParam('date_ended')));
+        displayEndMonth = endDate.getMonth() + 1 //JS month is 0-11
         this.state = {
             book_id: this.props.navigation.getParam('book_id'),
             book_title: this.props.navigation.getParam('book_title'),
             book_author: this.props.navigation.getParam('book_author'),
             book_image_url: this.props.navigation.getParam('book_image_url'),
             date_started: this.props.navigation.getParam('date_started'),
-            display_date_started: date.getFullYear() + "-" + displayMonth + "-" + date.getDate(),
+            display_date_started: startDate.getFullYear() + "-" + displayStartMonth + "-" + startDate.getDate(),
             date_ended: this.props.navigation.getParam('date_ended'),
+            display_date_ended: endDate.getFullYear() + "-" + displayEndMonth + "-" + endDate.getDate(),
         }
     }
 
     render() {
-              
+
         return (<View>
             <Image source={{ uri: this.state.book_image_url }}
                 style={{ width: 65, height: 100 }} />
@@ -118,12 +121,30 @@ export default class App extends React.Component {
                         marginLeft: 36
                     }
                 }}
-                onDateChange={(display_date_started) => {this.setState({display_date_started: display_date_started})}}
+                onDateChange={(display_date_started) => { this.setState({ display_date_started: display_date_started }) }}
             />
-            <TextInput
-                style={styles.dates}
-                onChangeText={(date_ended) => this.setState({ date_ended })}
-                defaultValue={this.state.date_ended}
+            <DatePicker
+                style={{ width: 200 }}
+                date={this.state.display_date_ended}
+                mode="date"
+                placeholder="select date"
+                format="YYYY-MM-DD"
+                minDate="1970-01-01"
+                maxDate="2170-01-01"
+                confirmBtnText="Confirm"
+                cancelBtnText="Cancel"
+                customStyles={{
+                    dateIcon: {
+                        position: 'absolute',
+                        left: 0,
+                        top: 4,
+                        marginLeft: 0
+                    },
+                    dateInput: {
+                        marginLeft: 36
+                    }
+                }}
+                onDateChange={(display_date_ended) => { this.setState({ display_date_ended: display_date_ended }) }}
             />
             <Button
                 style={styles.addButton}
@@ -160,30 +181,39 @@ export default class App extends React.Component {
         this.props.navigation.goBack();
     }
 
-    updateBook() {
-        year = parseInt(this.state.display_date_started.substring(0, 4)) 
-        month = parseInt(this.state.display_date_started.substring(5, 7)) - 1 //js month is 0-11
-        day = parseInt(this.state.display_date_started.substring(8, 10))
+    convertDisplayDateToMillis(displayDate) {
+        year = parseInt(displayDate.substring(0, 4))
+        month = parseInt(displayDate.substring(5, 7)) - 1 //js month is 0-11
+        day = parseInt(displayDate.substring(8, 10))
         date = new Date(year, month, day, 12, 0, 0, 0)
         console.log("date parsed from date picker: " + year + "-" + month + "-" + day);
         console.log("getTime from date picker Javascript date object: " + date.getTime())
-        test = new Date(date.getTime());
-        console.log(test.toString());
+        return date.getTime();
+    }
+
+    updateBook() {
+        startDateMillis = this.convertDisplayDateToMillis(this.state.display_date_started)
+        endDateMillis = this.convertDisplayDateToMillis(this.state.display_date_ended)
+
+        console.log("start date: " + startDateMillis)
+        console.log("end date: " + endDateMillis)
+
         db.transaction((tx) => {
             tx.executeSql(
                 'UPDATE table_books set book_title=?, book_author=?, book_image_url=?, date_started=?, date_ended=?, read_category=? where book_id=?',
-                [this.state.book_title, this.state.book_author, this.state.book_image_url, date.getTime(), this.state.date_ended, this.state.read_category, this.state.book_id],
+                [this.state.book_title, this.state.book_author, this.state.book_image_url, startDateMillis, endDateMillis, this.state.read_category, this.state.book_id],
                 (tx, results) => {
                     console.log('Results', results.rowsAffected);
                     if (results.rowsAffected > 0) {
-                        Alert.alert('Success');
+                        Alert.alert('Updated');
+                        console.log("success");
                     } else {
                         alert('Updation Failed');
+                        console.log("failure");
                     }
                 }
             );
         });
         this.props.navigation.goBack();
     }
-
 }

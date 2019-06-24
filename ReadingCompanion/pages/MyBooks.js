@@ -67,16 +67,16 @@ export default class App extends React.Component {
         title: 'My Books',
         //Sets Header text of Status Bar
         headerStyle: {
-          backgroundColor: '#92e8e5',
-          //Sets Header color
+            backgroundColor: '#92e8e5',
+            //Sets Header color
         },
         headerTintColor: '#fff',
         //Sets Header text color
         headerTitleStyle: {
-          fontWeight: 'bold',
-          //Sets Header text style
+            fontWeight: 'bold',
+            //Sets Header text style
         },
-      };
+    };
 
     /*
      * Component Methods
@@ -106,7 +106,7 @@ export default class App extends React.Component {
     componentWillUnmount() {
         // Remove the event listener
         this.focusListener.remove();
-      }
+    }
 
     ListViewItemSeparator = () => {
         return (
@@ -141,10 +141,10 @@ export default class App extends React.Component {
                     ItemSeparatorComponent={this.ListViewItemSeparator}
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={({ item }) => {
-                        let thisDate = new Date(parseInt(item.date_started));
-                        let displayMonth = thisDate.getMonth() + 1;
-                        let day = thisDate.getDate();
-                        let year = thisDate.getFullYear();
+                        startDate = new Date(parseInt(item.date_started));
+                        displayStartMonth = startDate.getMonth() + 1;
+                        endDate = new Date(parseInt(item.date_ended));
+                        displayEndMonth = endDate.getMonth() + 1;
                         return (
                             <View key={item.book_id} style={styles.container}>
                                 <TouchableHighlight style={styles.touchable} onPress={() => this.onSelectBook(item)} activeOpacity={0.75} underlayColor={"#c6fffd"}>
@@ -161,8 +161,8 @@ export default class App extends React.Component {
 
 
                                         <Text style={styles.author}>by {item.book_author}</Text>
-                                        <Text style={styles.dates}>Started: {displayMonth + "/" + day + "/" + year}</Text>
-                                        <Text style={styles.dates}>Finished: {item.date_ended}</Text>
+                                        <Text style={styles.dates}>Started: {displayStartMonth + "/" + startDate.getDate() + "/" + startDate.getFullYear()}</Text>
+                                        <Text style={styles.dates}>Finished: {displayEndMonth + "/" + endDate.getDate() + "/" + endDate.getFullYear()}</Text>
 
                                     </View>
                                 </TouchableHighlight>
@@ -206,7 +206,7 @@ export default class App extends React.Component {
         db.transaction(function (tx) {
             tx.executeSql( //insert new item
                 'INSERT INTO table_books (book_title, book_author, book_image_url, date_started, date_ended, read_category) VALUES (?,?,?,?,?,?)',
-                ["The Collected Tales of Nikolai Gogol", "Nikolai Gogol", placeholderImage, now.getTime(), "N/A", "1"],
+                ["The Collected Tales of Nikolai Gogol", "Nikolai Gogol", placeholderImage, now.getTime(), now.getTime(), "1"],
                 function (tx, result) {
                     self.refreshList();
                 }
@@ -268,6 +268,6 @@ export default class App extends React.Component {
             book_image_url: book.book_image_url,
             date_started: book.date_started,
             date_ended: book.date_ended,
-          })
+        })
     }
 }
