@@ -70,18 +70,32 @@ export default class App extends React.Component {
     constructor(props) {
         super(props);
         startDate = new Date(parseInt(this.props.navigation.getParam('date_started')));
-        displayStartMonth = startDate.getMonth() + 1 //JS month is 0-11
+        displayStartMonthString = '' + (startDate.getMonth() + 1) //JS month is 0-11
+        if ((startDate.getMonth() + 1) < 10) {
+            displayStartMonthString = '0' + displayStartMonthString
+        }
+        displayStartDayString = '' + startDate.getDate();
+        if (startDate.getDate() < 10) {
+            displayStartDayString = '0' + displayStartDayString
+        }
         endDate = new Date(parseInt(this.props.navigation.getParam('date_ended')));
-        displayEndMonth = endDate.getMonth() + 1 //JS month is 0-11
+        displayEndMonthString = '' + (endDate.getMonth() + 1) //JS month is 0-11
+        if ((endDate.getMonth() + 1) < 10) {
+            displayEndMonthString = '0' + displayEndMonthString
+        }
+        displayEndDayString = '' + endDate.getDate();
+        if (endDate.getDate() < 10) {
+            displayEndDayString = '0' + displayEndDayString
+        }
         this.state = {
             book_id: this.props.navigation.getParam('book_id'),
             book_title: this.props.navigation.getParam('book_title'),
             book_author: this.props.navigation.getParam('book_author'),
             book_image_url: this.props.navigation.getParam('book_image_url'),
             date_started: this.props.navigation.getParam('date_started'),
-            display_date_started: startDate.getFullYear() + "-" + displayStartMonth + "-" + startDate.getDate(),
+            display_date_started: startDate.getFullYear() + "-" + displayStartMonthString + "-" + displayStartDayString,
             date_ended: this.props.navigation.getParam('date_ended'),
-            display_date_ended: endDate.getFullYear() + "-" + displayEndMonth + "-" + endDate.getDate(),
+            display_date_ended: endDate.getFullYear() + "-" + displayEndMonthString + "-" + displayEndDayString,
         }
     }
 
