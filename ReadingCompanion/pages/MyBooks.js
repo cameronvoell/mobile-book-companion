@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { Image, TouchableHighlight, Dimensions, FlatList, StyleSheet, Text, View, Button, Alert } from 'react-native';
+import { Picker, Image, TouchableHighlight, Dimensions, FlatList, StyleSheet, Text, View, Button, Alert } from 'react-native';
 import { openDatabase } from 'react-native-sqlite-storage';
 import DialogManager, { ScaleAnimation, DialogContent } from 'react-native-dialog-component';
 
@@ -90,6 +90,8 @@ export default class App extends React.Component {
             book_image_url: '',
             date_started: '',
             date_ended: '',
+            sort_by: 'book_id',
+            sort_order: 'ASC',
         };
     }
 
@@ -119,19 +121,29 @@ export default class App extends React.Component {
         return (
             <View style={styles.main}>
                 <View style={{ flexDirection: "row" }}>
-                    <View style={{ flex: 1, margin: 10 }}>
-                        <Button
-                            style={styles.sortFilter}
-                            title="sort by"
-                            onPress={this.onPressAddButton}
-                        />
+                    <View style={{ flex: 1, margin: 5, backgroundColor: "#479aff" }}>
+                        <Picker
+                            selectedValue={self.state.sort_by}
+                            style={{ height: 50, width: 200 }}
+                            onValueChange={(itemValue, itemIndex) =>
+                                self.onSortByChanged(itemValue)
+                            }>
+                            <Picker.Item label="Title" value="book_title" />
+                            <Picker.Item label="Author" value="book_author" />
+                            <Picker.Item label="Date Started" value="date_started" />
+                            <Picker.Item label="Date Finished" value="date_ended" />
+                        </Picker>
                     </View>
-                    <View style={{ flex: 1, margin: 10 }}>
-                        <Button
-                            style={styles.sortFilter}
-                            title="filter"
-                            onPress={this.onPressAddButton}
-                        />
+                    <View style={{ flex: 1, margin: 5, backgroundColor: "#479aff" }}>
+                        <Picker
+                            selectedValue={self.state.sort_order}
+                            style={{ height: 50, width: 200 }}
+                            onValueChange={(itemValue, itemIndex) =>
+                                self.onSortOrderChanged(itemValue)
+                            }>
+                            <Picker.Item label="Ascending" value="ASC" />
+                            <Picker.Item label="Descending" value="DESC" />
+                        </Picker>
                     </View>
                 </View>
                 <FlatList
@@ -158,8 +170,6 @@ export default class App extends React.Component {
                                                 <Text style={styles.bookTitle}>{item.book_title}</Text>
                                             </View>
                                         </View>
-
-
                                         <Text style={styles.author}>by {item.book_author}</Text>
                                         <Text style={styles.dates}>Started: {displayStartMonth + "/" + startDate.getDate() + "/" + startDate.getFullYear()}</Text>
                                         <Text style={styles.dates}>Finished: {displayEndMonth + "/" + endDate.getDate() + "/" + endDate.getFullYear()}</Text>
@@ -183,6 +193,26 @@ export default class App extends React.Component {
     /*
      * Onclick Handler Methods
      */
+    onSortByChanged(value) {
+        if (value != undefined) {
+            self.setState({
+                sort_by: value,
+            }, function afterStateUpdate() {
+                self.refreshList()
+            })
+        }
+    }
+
+    onSortOrderChanged(value) {
+        if (value != undefined) {
+            self.setState({
+                sort_order: value,
+            }, function afterStateUpdate() {
+                self.refreshList()
+            })
+        }
+    }
+
     onSelectBook(book) {
         let startDate = new Date(parseInt(book.date_started))
         let endDate = new Date(parseInt(book.date_ended))
@@ -206,9 +236,9 @@ export default class App extends React.Component {
         db.transaction(function (tx) {
             tx.executeSql( //insert new item
                 'INSERT INTO table_books (book_title, book_author, book_image_url, date_started, date_ended, read_category) VALUES (?,?,?,?,?,?)',
-                ["The Collected Tales of Nikolai Gogol", "Nikolai Gogol", placeholderImage, now.getTime(), now.getTime(), "1"],
+                ["Title", "Author", placeholderImage, now.getTime(), now.getTime(), "1"],
                 function (tx, result) {
-                    self.refreshList();
+                    self.refreshList()
                 }
             );
         });
@@ -248,7 +278,7 @@ export default class App extends React.Component {
 
     refreshList() {
         db.transaction(tx => {
-            tx.executeSql('SELECT * FROM table_books ORDER BY book_id ASC', [], (tx, results) => {
+            tx.executeSql('SELECT * FROM table_books ORDER BY '+ self.state.sort_by + ' ' + self.state.sort_order, [], (tx, results) => {
                 var temp = [];
                 for (let i = 0; i < results.rows.length; ++i) {
                     temp.push(results.rows.item(i));
