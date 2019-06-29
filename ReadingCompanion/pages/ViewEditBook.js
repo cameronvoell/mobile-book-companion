@@ -23,13 +23,13 @@ const styles = StyleSheet.create({
         padding: 10,
         marginBottom: 40,
     },
-    bookTitle: {
+    editBookTitle: {
         fontSize: 17,
         color: '#000000',
+        margin: 10,
     },
     author: {
         fontSize: 16,
-        textAlign: 'center',
         color: '#333333',
         margin: 10,
     },
@@ -105,14 +105,16 @@ export default class App extends React.Component {
             <Image source={{ uri: this.state.book_image_url }}
                 style={{ width: 65, height: 100 }} />
             <TextInput
-                style={styles.bookTitle}
+                style={styles.editBookTitle}
                 onChangeText={book_title => this.setState({ book_title })}
                 defaultValue={this.state.book_title}
+                selectTextOnFocus={true}
             />
             <TextInput
                 style={styles.author}
                 onChangeText={(book_author) => this.setState({ book_author })}
                 defaultValue={this.state.book_author}
+                selectTextOnFocus={true}
             />
             <DatePicker
                 style={{ width: 200 }}
