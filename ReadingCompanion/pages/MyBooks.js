@@ -132,6 +132,7 @@ export default class App extends React.Component {
                             <Picker.Item label="Author" value="book_author" />
                             <Picker.Item label="Date Started" value="date_started" />
                             <Picker.Item label="Date Finished" value="date_ended" />
+                            <Picker.Item label="Order Added" value="book_id" />
                         </Picker>
                     </View>
                     <View style={{ flex: 1, margin: 5, backgroundColor: "#479aff" }}>
@@ -236,7 +237,7 @@ export default class App extends React.Component {
         db.transaction(function (tx) {
             tx.executeSql( //insert new item
                 'INSERT INTO table_books (book_title, book_author, book_image_url, date_started, date_ended, read_category) VALUES (?,?,?,?,?,?)',
-                ["Title", "Author", placeholderImage, now.getTime(), now.getTime(), "1"],
+                ["Edit Title", "Edit Author", placeholderImage, now.getTime(), now.getTime(), "1"],
                 function (tx, result) {
                     self.refreshList()
                 }
@@ -265,7 +266,7 @@ export default class App extends React.Component {
                         let now = new Date()
                         tx.executeSql(
                             'INSERT INTO table_books (book_title, book_author, book_image_url, date_started, date_ended, read_category) VALUES (?,?,?,?,?,?)',
-                            ["The Collected Tales of Nikolai Gogol", "Nikolai Gogol", placeholderImage, "May 15, 2019", "N/A", "1"],
+                            ["Edit Title", "Edit Author", placeholderImage, now.getTime(), now.getTime(), "1"],
                             (tx, results) => {
                                 console.log('Results', results.rowsAffected);
                             }
