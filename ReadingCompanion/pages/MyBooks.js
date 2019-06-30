@@ -233,16 +233,7 @@ export default class App extends React.Component {
     }
 
     onPressAddButton() {
-        let now = new Date()
-        db.transaction(function (tx) {
-            tx.executeSql( //insert new item
-                'INSERT INTO table_books (book_title, book_author, book_image_url, date_started, date_ended, read_category) VALUES (?,?,?,?,?,?)',
-                ["Edit Title", "Edit Author", placeholderImage, now.getTime(), now.getTime(), "1"],
-                function (tx, result) {
-                    self.refreshList()
-                }
-            );
-        });
+        self.props.navigation.navigate('SearchAPIList')
     }
 
     /*
