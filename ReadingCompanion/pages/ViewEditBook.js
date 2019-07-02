@@ -2,6 +2,7 @@ import React from 'react';
 import { Alert, TextInput, Dimensions, Image, StyleSheet, Text, View, Button } from 'react-native';
 import { openDatabase } from 'react-native-sqlite-storage';
 import DatePicker from 'react-native-datepicker'
+import { MillisToDisplayDate, DisplayDateToMillis } from '../util/DateUtil';
 
 const styles = StyleSheet.create({
     main: {
@@ -69,33 +70,15 @@ export default class App extends React.Component {
 
     constructor(props) {
         super(props);
-        startDate = new Date(parseInt(this.props.navigation.getParam('date_started')));
-        displayStartMonthString = '' + (startDate.getMonth() + 1) //JS month is 0-11
-        if ((startDate.getMonth() + 1) < 10) {
-            displayStartMonthString = '0' + displayStartMonthString
-        }
-        displayStartDayString = '' + startDate.getDate();
-        if (startDate.getDate() < 10) {
-            displayStartDayString = '0' + displayStartDayString
-        }
-        endDate = new Date(parseInt(this.props.navigation.getParam('date_ended')));
-        displayEndMonthString = '' + (endDate.getMonth() + 1) //JS month is 0-11
-        if ((endDate.getMonth() + 1) < 10) {
-            displayEndMonthString = '0' + displayEndMonthString
-        }
-        displayEndDayString = '' + endDate.getDate();
-        if (endDate.getDate() < 10) {
-            displayEndDayString = '0' + displayEndDayString
-        }
         this.state = {
             book_id: this.props.navigation.getParam('book_id'),
             book_title: this.props.navigation.getParam('book_title'),
             book_author: this.props.navigation.getParam('book_author'),
             book_image_url: this.props.navigation.getParam('book_image_url'),
-            date_started: this.props.navigation.getParam('date_started'),
-            display_date_started: startDate.getFullYear() + "-" + displayStartMonthString + "-" + displayStartDayString,
-            date_ended: this.props.navigation.getParam('date_ended'),
-            display_date_ended: endDate.getFullYear() + "-" + displayEndMonthString + "-" + displayEndDayString,
+            date_started_millis: this.props.navigation.getParam('date_started_millis'),
+            date_ended_millis: this.props.navigation.getParam('date_ended_millis'),
+            date_started_display: MillisToDisplayDate(this.props.navigation.getParam('date_started_millis')),
+            date_ended_display: MillisToDisplayDate(this.props.navigation.getParam('date_ended_millis')),
         }
     }
 
@@ -118,12 +101,12 @@ export default class App extends React.Component {
             />
             <DatePicker
                 style={{ width: 200 }}
-                date={this.state.display_date_started}
+                date={this.state.date_started_display}
                 mode="date"
                 placeholder="select date"
-                format="YYYY-MM-DD"
-                minDate="1970-01-01"
-                maxDate="2170-01-01"
+                format="MM-DD-YYYY"
+                minDate="01-01-1970"
+                maxDate="01-01-2170"
                 confirmBtnText="Confirm"
                 cancelBtnText="Cancel"
                 customStyles={{
@@ -137,16 +120,16 @@ export default class App extends React.Component {
                         marginLeft: 36
                     }
                 }}
-                onDateChange={(display_date_started) => { this.setState({ display_date_started: display_date_started }) }}
+                onDateChange={(date_started_display) => { this.setState({ date_started_display: date_started_display }) }}
             />
             <DatePicker
                 style={{ width: 200 }}
-                date={this.state.display_date_ended}
+                date={this.state.date_ended_display}
                 mode="date"
                 placeholder="select date"
-                format="YYYY-MM-DD"
-                minDate="1970-01-01"
-                maxDate="2170-01-01"
+                format="MM-DD-YYYY"
+                minDate="01-01-1970"
+                maxDate="01-01-2170"
                 confirmBtnText="Confirm"
                 cancelBtnText="Cancel"
                 customStyles={{
@@ -160,7 +143,7 @@ export default class App extends React.Component {
                         marginLeft: 36
                     }
                 }}
-                onDateChange={(display_date_ended) => { this.setState({ display_date_ended: display_date_ended }) }}
+                onDateChange={(date_ended_display) => { this.setState({ date_ended_display: date_ended_display }) }}
             />
             <Button
                 style={styles.addButton}
@@ -197,26 +180,18 @@ export default class App extends React.Component {
         this.props.navigation.goBack();
     }
 
-    convertDisplayDateToMillis(displayDate) {
-        year = parseInt(displayDate.substring(0, 4))
-        month = parseInt(displayDate.substring(5, 7)) - 1 //js month is 0-11
-        day = parseInt(displayDate.substring(8, 10))
-        date = new Date(year, month, day, 12, 0, 0, 0)
-        console.log("date parsed from date picker: " + year + "-" + month + "-" + day);
-        console.log("getTime from date picker Javascript date object: " + date.getTime())
-        return date.getTime();
-    }
+    
 
     updateBook() {
-        startDateMillis = this.convertDisplayDateToMillis(this.state.display_date_started)
-        endDateMillis = this.convertDisplayDateToMillis(this.state.display_date_ended)
+        startDateMillis = DisplayDateToMillis(this.state.date_started_display)
+        endDateMillis = DisplayDateToMillis(this.state.date_ended_display)
 
         console.log("start date: " + startDateMillis)
         console.log("end date: " + endDateMillis)
 
         db.transaction((tx) => {
             tx.executeSql(
-                'UPDATE table_books set book_title=?, book_author=?, book_image_url=?, date_started=?, date_ended=?, read_category=? where book_id=?',
+                'UPDATE table_books set book_title=?, book_author=?, book_image_url=?, date_started_millis=?, date_ended_millis=?, read_category=? where book_id=?',
                 [this.state.book_title, this.state.book_author, this.state.book_image_url, startDateMillis, endDateMillis, this.state.read_category, this.state.book_id],
                 (tx, results) => {
                     console.log('Results', results.rowsAffected);

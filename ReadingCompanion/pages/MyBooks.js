@@ -8,8 +8,8 @@
 
 import React from 'react';
 import { Picker, Image, TouchableHighlight, Dimensions, FlatList, StyleSheet, Text, View, Button, Alert } from 'react-native';
+import { MillisToDisplayDate } from '../util/DateUtil';
 import { openDatabase } from 'react-native-sqlite-storage';
-import DialogManager, { ScaleAnimation, DialogContent } from 'react-native-dialog-component';
 
 const styles = StyleSheet.create({
     main: {
@@ -88,8 +88,8 @@ export default class App extends React.Component {
             book_title: '',
             book_author: '',
             book_image_url: '',
-            date_started: '',
-            date_ended: '',
+            date_started_millis: '',
+            date_ended_millis: '',
             sort_by: 'book_id',
             sort_order: 'ASC',
         };
@@ -130,8 +130,8 @@ export default class App extends React.Component {
                             }>
                             <Picker.Item label="Title" value="book_title" />
                             <Picker.Item label="Author" value="book_author" />
-                            <Picker.Item label="Date Started" value="date_started" />
-                            <Picker.Item label="Date Finished" value="date_ended" />
+                            <Picker.Item label="Date Started" value="date_started_millis" />
+                            <Picker.Item label="Date Finished" value="date_ended_millis" />
                             <Picker.Item label="Order Added" value="book_id" />
                         </Picker>
                     </View>
@@ -154,10 +154,6 @@ export default class App extends React.Component {
                     ItemSeparatorComponent={this.ListViewItemSeparator}
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={({ item }) => {
-                        startDate = new Date(parseInt(item.date_started));
-                        displayStartMonth = startDate.getMonth() + 1;
-                        endDate = new Date(parseInt(item.date_ended));
-                        displayEndMonth = endDate.getMonth() + 1;
                         return (
                             <View key={item.book_id} style={styles.container}>
                                 <TouchableHighlight style={styles.touchable} onPress={() => this.onSelectBook(item)} activeOpacity={0.75} underlayColor={"#c6fffd"}>
@@ -172,8 +168,8 @@ export default class App extends React.Component {
                                             </View>
                                         </View>
                                         <Text style={styles.author}>by {item.book_author}</Text>
-                                        <Text style={styles.dates}>Started: {displayStartMonth + "/" + startDate.getDate() + "/" + startDate.getFullYear()}</Text>
-                                        <Text style={styles.dates}>Finished: {displayEndMonth + "/" + endDate.getDate() + "/" + endDate.getFullYear()}</Text>
+                                        <Text style={styles.dates}>Started: {MillisToDisplayDate(item.date_started_millis)}</Text>
+                                        <Text style={styles.dates}>Finished: {MillisToDisplayDate(item.date_ended_millis)}</Text>
 
                                     </View>
                                 </TouchableHighlight>
@@ -215,18 +211,14 @@ export default class App extends React.Component {
     }
 
     onSelectBook(book) {
-        let startDate = new Date(parseInt(book.date_started))
-        let endDate = new Date(parseInt(book.date_ended))
 
         self.setState({
             book_id: book.book_id,
             book_title: book.book_title,
             book_author: book.book_author,
             book_image_url: book.book_image_url,
-            date_started: book.date_started,
-            display_date_started: startDate.getMonth() + "-" + startDate.getDate() + "-" + startDate.getFullYear(),
-            date_ended: book.date_ended,
-            display_date_ended: endDate.getMonth() + "-" + endDate.getDate() + "-" + endDate.getFullYear(),
+            date_started_millis: book.date_started_millis,
+            date_ended_millis: book.date_ended_millis,
         }, function afterStateUpdate() {
             self.showViewEditBook(book)
         });
@@ -251,12 +243,12 @@ export default class App extends React.Component {
                     if (res.rows.length == 0) {
                         txn.executeSql('DROP TABLE IF EXISTS table_books', []);
                         txn.executeSql(
-                            'CREATE TABLE IF NOT EXISTS table_books(book_id INTEGER PRIMARY KEY AUTOINCREMENT, book_title TEXT, book_author TEXT, book_image_url TEXT, date_started TEXT, date_ended TEXT, read_category INT(10))',
+                            'CREATE TABLE IF NOT EXISTS table_books(book_id INTEGER PRIMARY KEY AUTOINCREMENT, book_title TEXT, book_author TEXT, book_image_url TEXT, date_started_millis INTEGER, date_ended_millis INTEGER, read_category INT(10))',
                             []
                         );
                         let now = new Date()
                         tx.executeSql(
-                            'INSERT INTO table_books (book_title, book_author, book_image_url, date_started, date_ended, read_category) VALUES (?,?,?,?,?,?)',
+                            'INSERT INTO table_books (book_title, book_author, book_image_url, date_started_millis, date_ended_millis, read_category) VALUES (?,?,?,?,?,?)',
                             ["Edit Title", "Edit Author", placeholderImage, now.getTime(), now.getTime(), "1"],
                             (tx, results) => {
                                 console.log('Results', results.rowsAffected);
@@ -288,8 +280,8 @@ export default class App extends React.Component {
             book_title: book.book_title,
             book_author: book.book_author,
             book_image_url: book.book_image_url,
-            date_started: book.date_started,
-            date_ended: book.date_ended,
+            date_started_millis: book.date_started_millis,
+            date_ended_millis: book.date_ended_millis,
         })
     }
 }
