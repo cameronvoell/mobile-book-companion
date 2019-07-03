@@ -1,5 +1,6 @@
 import React from 'react';
-import { FlatList, Dimensions, Alert, TextInput, Image, StyleSheet, Text, View, Button } from 'react-native';
+import { Keyboard, FlatList, Alert, TextInput, Image, StyleSheet, Text, View, Button } from 'react-native';
+import { openDatabase } from 'react-native-sqlite-storage';
 
 const styles = StyleSheet.create({
     main: {
@@ -25,14 +26,13 @@ const styles = StyleSheet.create({
         margin: 10,
     },
     container: {
-        minHeight: Dimensions.get('window').height / 8,
         backgroundColor: '#ffffff',
-        flex: 0.5,
         margin: 5,
     },
 });
 
 var self;
+var db = openDatabase({ name: 'BookDatabase.db' });
 
 export default class SearchAPIList extends React.Component {
 
@@ -60,7 +60,22 @@ export default class SearchAPIList extends React.Component {
     }
 
     onSearchPress() {
-       self.fetchBooksFromApiAsync(self.state.searchString)
+        self.fetchBooksFromApiAsync(self.state.searchString)
+        Keyboard.dismiss()
+    }
+
+    addItem(item) {
+        db.transaction(function (txn) {
+            let now = new Date()
+            txn.executeSql(
+                'INSERT INTO table_books (book_title, book_author, book_image_url, date_started_millis, date_ended_millis, read_category) VALUES (?,?,?,?,?,?)',
+                [item.volumeInfo.title, item.volumeInfo.authors, item.volumeInfo.imageLinks.smallThumbnail, now.getTime(), now.getTime(), "1"],
+                (tx, results) => {
+                    console.log('Results', results.rowsAffected);
+                }
+            );
+        });
+        Alert.alert("Add " + item.volumeInfo.title)
     }
 
     fetchBooksFromApiAsync(searchString) {
@@ -69,10 +84,23 @@ export default class SearchAPIList extends React.Component {
           .then((responseJson) => {
             self.setState({FlatListItems: responseJson.items})
           })
-          .catch((error) => {
-            console.error(error);
-          });
-      }
+            .catch((error) => {
+                console.error(error);
+            });
+    }
+
+    renderSeparator = () => {
+        return (
+            <View
+                style={{
+                    height: 1,
+                    width: "86%",
+                    backgroundColor: "#CED0CE",
+                    marginLeft: "14%"
+                }}
+            />
+        );
+    };
 
     render() {
         return (
@@ -96,6 +124,7 @@ export default class SearchAPIList extends React.Component {
                     </View>
                 </View>
                 <FlatList
+                    ItemSeparatorComponent={this.renderSeparator}
                     data={this.state.FlatListItems}
                     keyExtractor={(item, id) => id.toString()}
                     renderItem={({ item }) => {
@@ -103,15 +132,22 @@ export default class SearchAPIList extends React.Component {
                             <View key={item.id} style={styles.container}>
                                     <View>
                                         <View style={{ flexDirection: "row" }}>
-                                            <View style={{ flex: 35 }}>
+                                            <View style={{ flex: 30 }}>
                                                 <Image source={{ uri: item.volumeInfo.imageLinks.smallThumbnail }}
                                                     style={{ width: 65, height: 100 }} />
                                             </View>
-                                            <View style={{ flex: 65 }}>
+                                            <View style={{ flex: 60 }}>
                                                 <Text style={styles.bookTitle}>{item.volumeInfo.title}</Text>
+                                                <Text style={styles.author}>by {item.volumeInfo.authors}</Text>
                                             </View>
+                                            <View style={{ flex: 10 }}>
+                                            <Button
+                                            title={"+"}
+                                            onPress={() => this.addItem(item)}
+                                            />        
+                                            </View>                                        
                                         </View>
-                                        <Text style={styles.author}>by {item.volumeInfo.authors}</Text>
+                                        
 
                                     </View>
                             </View>
