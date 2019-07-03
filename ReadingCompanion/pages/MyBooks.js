@@ -28,18 +28,22 @@ const styles = StyleSheet.create({
     },
     flatlistContainer: {
         justifyContent: 'space-between',
-        padding: 10,
+        padding: 5,
         marginBottom: 40,
     },
     bookTitle: {
+        textAlign: 'center',
+        height: 43,
         fontSize: 17,
         color: '#000000',
     },
     author: {
-        fontSize: 16,
+        textAlign: 'center',
+        height: 33,
+        marginBottom: 5,
+        fontSize: 14,
         textAlign: 'center',
         color: '#333333',
-        margin: 10,
     },
     dates: {
         textAlign: 'left',
@@ -112,7 +116,7 @@ export default class App extends React.Component {
 
     ListViewItemSeparator = () => {
         return (
-            <View style={{ height: 1, width: '100%', backgroundColor: '#ffffff' }} />
+            <View style={{ height: 0, width: '100%', backgroundColor: '#ffffff' }} />
         );
     };
 
@@ -121,7 +125,7 @@ export default class App extends React.Component {
         return (
             <View style={styles.main}>
                 <View style={{ flexDirection: "row" }}>
-                    <View style={{ flex: 1, margin: 5, backgroundColor: "#479aff" }}>
+                    <View style={{ flex: 1, marginTop: 5, marginHorizontal: 5, backgroundColor: "#479aff" }}>
                         <Picker
                             selectedValue={self.state.sort_by}
                             style={{ height: 50, width: 200 }}
@@ -135,7 +139,7 @@ export default class App extends React.Component {
                             <Picker.Item label="Order Added" value="book_id" />
                         </Picker>
                     </View>
-                    <View style={{ flex: 1, margin: 5, backgroundColor: "#479aff" }}>
+                    <View style={{ flex: 1, marginTop: 5, marginHorizontal: 5, backgroundColor: "#479aff" }}>
                         <Picker
                             selectedValue={self.state.sort_order}
                             style={{ height: 50, width: 200 }}
@@ -158,25 +162,24 @@ export default class App extends React.Component {
                             <View key={item.book_id} style={styles.container}>
                                 <TouchableHighlight style={styles.touchable} onPress={() => this.onSelectBook(item)} activeOpacity={0.75} underlayColor={"#c6fffd"}>
                                     <View>
+                                        <Text style={styles.bookTitle}>{item.book_title}</Text>
+                                        <Text style={styles.author}>by {item.book_author}</Text>
                                         <View style={{ flexDirection: "row" }}>
-                                            <View style={{ flex: 35 }}>
+                                            <View style={{ flex: 50 }}>
                                                 <Image source={{ uri: item.book_image_url }}
-                                                    style={{ width: 65, height: 100 }} />
+                                                    style={{ width: 90, height: 145 }} />
                                             </View>
-                                            <View style={{ flex: 65 }}>
-                                                <Text style={styles.bookTitle}>{item.book_title}</Text>
+                                            <View style={{ flex: 50 }}>
+
+                                                <Text style={styles.dates}>Started: {MillisToDisplayDate(item.date_started_millis)}</Text>
+                                                <Text style={styles.dates}>Finished: {MillisToDisplayDate(item.date_ended_millis)}</Text>
                                             </View>
                                         </View>
-                                        <Text style={styles.author}>by {item.book_author}</Text>
-                                        <Text style={styles.dates}>Started: {MillisToDisplayDate(item.date_started_millis)}</Text>
-                                        <Text style={styles.dates}>Finished: {MillisToDisplayDate(item.date_ended_millis)}</Text>
-
                                     </View>
                                 </TouchableHighlight>
                             </View>
                         )
-                    }
-                    }
+                    }}
                 />
                 <Button
                     style={styles.addButton}
