@@ -33,6 +33,8 @@ const styles = StyleSheet.create({
 
 var self;
 var db = openDatabase({ name: 'BookDatabase.db' });
+const placeholderImage = "https://donrheem.com/wp-content/uploads/2016/11/Book-Placeholder.png"
+
 
 export default class SearchAPIList extends React.Component {
 
@@ -128,12 +130,16 @@ export default class SearchAPIList extends React.Component {
                     data={this.state.FlatListItems}
                     keyExtractor={(item, id) => id.toString()}
                     renderItem={({ item }) => {
+                        image = placeholderImage;
+                        if (item && item.volumeInfo && item.volumeInfo.imageLinks && item.volumeInfo.imageLinks.smallThumbnail) {
+                            image = item.volumeInfo.imageLinks.smallThumbnail
+                        }
                         return (
                             <View key={item.id} style={styles.container}>
                                     <View>
                                         <View style={{ flexDirection: "row" }}>
                                             <View style={{ flex: 30 }}>
-                                                <Image source={{ uri: item.volumeInfo.imageLinks.smallThumbnail }}
+                                                <Image source={{ uri: image }}
                                                     style={{ width: 65, height: 100 }} />
                                             </View>
                                             <View style={{ flex: 60 }}>
